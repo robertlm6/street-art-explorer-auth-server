@@ -14,3 +14,7 @@ CREATE TABLE app_user (
     disabled BOOLEAN NOT NULL DEFAULT FALSE,
     FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE RESTRICT
 );
+
+INSERT INTO role (role_name) VALUES
+    ('ROLE_ADMIN'),
+    ('ROLE_USER');
