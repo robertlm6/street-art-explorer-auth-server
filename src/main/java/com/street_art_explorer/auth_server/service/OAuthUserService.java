@@ -23,10 +23,6 @@ public class OAuthUserService {
             throw new RuntimeException("User already exists");
         }
 
-        if (roleRepository.findByName(oauthUserDto.getRole()).isPresent()) {
-            throw new RuntimeException("Role not found");
-        }
-
         OAuthUser oauthUser = oauthUserConverter.userDtoToUser(oauthUserDto);
         return oauthUserConverter.userToUserDto(oauthUserRepository.save(oauthUser));
     }
