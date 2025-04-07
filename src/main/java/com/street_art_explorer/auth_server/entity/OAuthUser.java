@@ -23,8 +23,10 @@ public class OAuthUser implements UserDetails {
     private Integer id;
     @Column(unique = true, nullable = false)
     private String username;
-    @Column(nullable = false)
     private String password;
+    @Column(unique = true, nullable = false)
+    private String email;
+    private String provider;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
