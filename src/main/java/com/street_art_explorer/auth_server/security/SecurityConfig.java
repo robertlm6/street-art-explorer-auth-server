@@ -5,6 +5,9 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.street_art_explorer.auth_server.service.CustomOAuth2UserService;
+import com.street_art_explorer.auth_server.service.CustomOidcUserService;
+import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -27,7 +30,11 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.UUID;
 
 @Configuration
+@AllArgsConstructor
 public class SecurityConfig {
+
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -47,8 +54,12 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) //TODO: Add a customized csrf filter
+                .csrf(csrf -> csrf.disable()) //It's not necessary a custom csrf filter here
                 .formLogin(Customizer.withDefaults())
+                .oauth2Login(oauth -> oauth
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(customOidcUserService)
+                                .userService(customOAuth2UserService)))
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
 
         return http.build();
