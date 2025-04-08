@@ -20,7 +20,11 @@ public class OAuthUserService {
     @Transactional
     public OAuthUserDto createOAuthUser(OAuthUserDto oauthUserDto) {
         if (oauthUserRepository.findByUsername(oauthUserDto.getUsername()).isPresent()) {
-            throw new RuntimeException("User already exists");
+            throw new RuntimeException("Username already in use");
+        }
+
+        if (oauthUserRepository.findByEmail(oauthUserDto.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already in use");
         }
 
         OAuthUser oauthUser = oauthUserConverter.userDtoToUser(oauthUserDto);
