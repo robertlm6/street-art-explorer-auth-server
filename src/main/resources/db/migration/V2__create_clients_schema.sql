@@ -73,7 +73,8 @@ VALUES (1, 'authorization_code'),
        (2, 'refresh_token');
 
 INSERT INTO scopes (id, scope)
-VALUES (1, 'openid');
+VALUES (1, 'openid'),
+       (2, 'offline_access');
 
 INSERT INTO redirect_uris (id, redirect_uri)
 VALUES (1, 'https://oauthdebugger.com/debug');
