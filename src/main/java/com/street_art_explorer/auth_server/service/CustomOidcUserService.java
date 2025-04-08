@@ -5,14 +5,17 @@ import com.street_art_explorer.auth_server.entity.Role;
 import com.street_art_explorer.auth_server.repository.OAuthUserRepository;
 import com.street_art_explorer.auth_server.repository.RoleRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest;
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import java.util.Set;
 
 @Service
 @AllArgsConstructor
@@ -27,26 +30,26 @@ public class CustomOidcUserService implements OAuth2UserService<OidcUserRequest,
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         String email = oidcUser.getAttribute("email");
-        String username = generateUsernameFromEmail(email);
 
-        if (oauthUserRepository.findByUsername(username).isEmpty()) {
-            OAuthUser newUser = new OAuthUser();
-            newUser.setUsername(username);
-            newUser.setEmail(email);
-            newUser.setProvider(registrationId);
-            newUser.setPassword(null);
+        OAuthUser user = oauthUserRepository.findByEmail(email)
+                .orElseGet(() -> createUser(email, registrationId));
 
-            Role userRole = roleRepository.findByName("ROLE_USER")
-                    .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+        Set<GrantedAuthority> authorities = Set.of(new SimpleGrantedAuthority(user.getRole().getName()));
 
-            newUser.setRole(userRole);
-            oauthUserRepository.save(newUser);
-        }
-
-        return oidcUser;
+        return new DefaultOidcUser(authorities, oidcUser.getIdToken(), "email");
     }
 
-    private String generateUsernameFromEmail(String email) {
-        return email != null ? email.split("@")[0] : UUID.randomUUID().toString();
+    private OAuthUser createUser(String email, String provider) {
+        Role userRole = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+
+        OAuthUser user = new OAuthUser();
+        user.setUsername(email.split("@")[0]);
+        user.setPassword(null);
+        user.setEmail(email);
+        user.setProvider(provider);
+        user.setRole(userRole);
+
+        return oauthUserRepository.save(user);
     }
 }
