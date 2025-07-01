@@ -142,7 +142,8 @@ public class SecurityConfig {
             Authentication principal = context.getPrincipal();
             if (context.getTokenType().getValue().equals("access_token")) {
                 Set<String> role = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
-                context.getClaims().claim("role", role).claim("username", principal.getName().split("@")[0]);
+                Integer authUserId = ((OAuthUser) principal.getPrincipal()).getId();
+                context.getClaims().claim("role", role).claim("username", principal.getName().split("@")[0]).claim("id", authUserId);
             }
         };
     }
