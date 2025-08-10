@@ -4,6 +4,7 @@ import com.street_art_explorer.auth_server.entity.OAuthUser;
 import com.street_art_explorer.auth_server.entity.Role;
 import com.street_art_explorer.auth_server.repository.OAuthUserRepository;
 import com.street_art_explorer.auth_server.repository.RoleRepository;
+import com.street_art_explorer.auth_server.web_client.ResourceServerClient;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,6 +24,7 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
     private final OAuthUserRepository oauthUserRepository;
     private final RoleRepository roleRepository;
+    private final ResourceServerClient resourceServerClient;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -34,6 +36,8 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
 
         OAuthUser user = oauthUserRepository.findByEmail(email)
                 .orElseGet(() -> createUser(email, registrationId));
+
+        resourceServerClient.createAndUpdateUserInResource(user.getId(), user.getUsername(), user.getEmail());
 
         Set<GrantedAuthority> authorities = Set.of(new SimpleGrantedAuthority(user.getRole().getName()));
 

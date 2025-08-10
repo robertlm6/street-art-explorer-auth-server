@@ -4,7 +4,7 @@ import com.street_art_explorer.auth_server.converter.OAuthUserConverter;
 import com.street_art_explorer.auth_server.dto.OAuthUserDto;
 import com.street_art_explorer.auth_server.entity.OAuthUser;
 import com.street_art_explorer.auth_server.repository.OAuthUserRepository;
-import com.street_art_explorer.auth_server.repository.RoleRepository;
+import com.street_art_explorer.auth_server.web_client.ResourceServerClient;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 public class OAuthUserService {
 
     private final OAuthUserRepository oauthUserRepository;
-    private final RoleRepository roleRepository;
     private final OAuthUserConverter oauthUserConverter;
+    private final ResourceServerClient resourceServerClient;
 
     @Transactional
     public OAuthUserDto createOAuthUser(OAuthUserDto oauthUserDto) {
@@ -28,6 +28,14 @@ public class OAuthUserService {
         }
 
         OAuthUser oauthUser = oauthUserConverter.userDtoToUser(oauthUserDto);
-        return oauthUserConverter.userToUserDto(oauthUserRepository.save(oauthUser));
+        OAuthUserDto oAuthUserDto = oauthUserConverter.userToUserDto(oauthUserRepository.save(oauthUser));
+
+        resourceServerClient.createAndUpdateUserInResource(
+                oAuthUserDto.getId(),
+                oAuthUserDto.getUsername(),
+                oAuthUserDto.getEmail()
+        );
+
+        return oAuthUserDto;
     }
 }

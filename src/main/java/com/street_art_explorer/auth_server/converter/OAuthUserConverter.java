@@ -16,7 +16,7 @@ public class OAuthUserConverter {
     private final RoleRepository roleRepository;
 
     public OAuthUserDto userToUserDto(OAuthUser oauthUser) {
-        return new OAuthUserDto(oauthUser.getUsername(), null, oauthUser.getEmail(), oauthUser.getRole().getName());
+        return new OAuthUserDto(oauthUser.getId(), oauthUser.getUsername(), null, oauthUser.getEmail(), oauthUser.getRole().getName());
     }
 
     public OAuthUser userDtoToUser(OAuthUserDto userDto) {
@@ -24,6 +24,7 @@ public class OAuthUserConverter {
                 .orElseThrow(() -> new RuntimeException("Role not found"));
 
         OAuthUser user = new OAuthUser();
+        user.setId(userDto.getId());
         user.setUsername(userDto.getUsername());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setEmail(userDto.getEmail());
