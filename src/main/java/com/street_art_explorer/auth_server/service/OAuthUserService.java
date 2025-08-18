@@ -2,6 +2,7 @@ package com.street_art_explorer.auth_server.service;
 
 import com.street_art_explorer.auth_server.converter.OAuthUserConverter;
 import com.street_art_explorer.auth_server.dto.OAuthUserDto;
+import com.street_art_explorer.auth_server.dto.OAuthUserRequestDto;
 import com.street_art_explorer.auth_server.entity.OAuthUser;
 import com.street_art_explorer.auth_server.repository.OAuthUserRepository;
 import com.street_art_explorer.auth_server.web_client.ResourceServerClient;
@@ -18,16 +19,16 @@ public class OAuthUserService {
     private final ResourceServerClient resourceServerClient;
 
     @Transactional
-    public OAuthUserDto createOAuthUser(OAuthUserDto oauthUserDto) {
-        if (oauthUserRepository.findByUsername(oauthUserDto.getUsername()).isPresent()) {
+    public OAuthUserDto createOAuthUser(OAuthUserRequestDto oAuthUserRequestDto) {
+        if (oauthUserRepository.findByUsername(oAuthUserRequestDto.getUsername()).isPresent()) {
             throw new RuntimeException("Username already in use");
         }
 
-        if (oauthUserRepository.findByEmail(oauthUserDto.getEmail()).isPresent()) {
+        if (oauthUserRepository.findByEmail(oAuthUserRequestDto.getEmail()).isPresent()) {
             throw new RuntimeException("Email already in use");
         }
 
-        OAuthUser oauthUser = oauthUserConverter.userDtoToUser(oauthUserDto);
+        OAuthUser oauthUser = oauthUserConverter.userRequestDtoToUser(oAuthUserRequestDto);
         OAuthUserDto oAuthUserDto = oauthUserConverter.userToUserDto(oauthUserRepository.save(oauthUser));
 
         resourceServerClient.createAndUpdateUserInResource(

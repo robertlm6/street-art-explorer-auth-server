@@ -1,6 +1,7 @@
 package com.street_art_explorer.auth_server.converter;
 
 import com.street_art_explorer.auth_server.dto.OAuthUserDto;
+import com.street_art_explorer.auth_server.dto.OAuthUserRequestDto;
 import com.street_art_explorer.auth_server.entity.OAuthUser;
 import com.street_art_explorer.auth_server.entity.Role;
 import com.street_art_explorer.auth_server.repository.RoleRepository;
@@ -28,6 +29,19 @@ public class OAuthUserConverter {
         user.setUsername(userDto.getUsername());
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
         user.setEmail(userDto.getEmail());
+        user.setRole(role);
+
+        return user;
+    }
+
+    public OAuthUser userRequestDtoToUser(OAuthUserRequestDto userRequestDto) {
+        Role role = roleRepository.findByName("ROLE_USER")
+                .orElseThrow(() -> new RuntimeException("ROLE_USER not found"));
+
+        OAuthUser user = new OAuthUser();
+        user.setUsername(userRequestDto.getUsername());
+        user.setPassword(passwordEncoder.encode(userRequestDto.getPassword()));
+        user.setEmail(userRequestDto.getEmail());
         user.setRole(role);
 
         return user;
