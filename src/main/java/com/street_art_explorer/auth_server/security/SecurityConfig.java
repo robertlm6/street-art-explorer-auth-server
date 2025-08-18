@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.street_art_explorer.auth_server.entity.OAuthUser;
+import com.street_art_explorer.auth_server.repository.OAuthUserRepository;
 import com.street_art_explorer.auth_server.service.CustomOAuth2UserService;
 import com.street_art_explorer.auth_server.service.CustomOidcUserService;
 import lombok.AllArgsConstructor;
@@ -17,8 +18,11 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
@@ -46,6 +50,7 @@ public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomOidcUserService customOidcUserService;
+    private final OAuthUserRepository oAuthUserRepository;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -139,11 +144,45 @@ public class SecurityConfig {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
-            Authentication principal = context.getPrincipal();
             if (context.getTokenType().getValue().equals("access_token")) {
-                Set<String> role = principal.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toSet());
-                Integer authUserId = ((OAuthUser) principal.getPrincipal()).getId();
-                context.getClaims().claim("role", role).claim("username", principal.getName().split("@")[0]).claim("id", authUserId);
+                Authentication authentication = context.getPrincipal();
+                Object principal = authentication.getPrincipal();
+
+                String email = null;
+                String username = null;
+
+                if (principal instanceof OidcUser oidc) {
+                    email = oidc.getEmail();
+                    if (email == null) email = oidc.getAttribute("email");
+                    if (username == null) username = oidc.getAttribute("email");
+                } else if (principal instanceof OAuth2User ou) {
+                    email = ou.getAttribute("email");
+                    username = ou.getAttribute("login");
+                } else if (principal instanceof UserDetails ud) {
+                    username = ud.getUsername();
+                } else {
+                    username = authentication.getName();
+                }
+
+                OAuthUser user = null;
+                if (email != null && !email.isBlank()) {
+                    user = oAuthUserRepository.findByEmail(email).orElse(null);
+                }
+                if (user == null && username != null && !username.isBlank()) {
+                    user = oAuthUserRepository.findByUsername(username).orElse(null);
+                }
+                if (user == null) {
+                    return;
+                }
+
+                Set<String> role = authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.toSet());
+                
+                context.getClaims()
+                        .claim("role", role)
+                        .claim("username", authentication.getName().split("@")[0])
+                        .claim("id", user.getId());
             }
         };
     }
