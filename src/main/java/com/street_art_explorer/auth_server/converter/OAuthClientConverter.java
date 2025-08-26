@@ -1,16 +1,22 @@
 package com.street_art_explorer.auth_server.converter;
 
-import com.street_art_explorer.auth_server.dto.OAuthClientDto;
-import com.street_art_explorer.auth_server.entity.*;
+import java.time.Duration;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.stereotype.Component;
 
-import java.time.Duration;
-import java.util.Set;
-import java.util.stream.Collectors;
+import com.street_art_explorer.auth_server.dto.OAuthClientDto;
+import com.street_art_explorer.auth_server.entity.ClientAuthenticationMethodCustom;
+import com.street_art_explorer.auth_server.entity.ClientGrantType;
+import com.street_art_explorer.auth_server.entity.ClientPostLogoutRedirectUri;
+import com.street_art_explorer.auth_server.entity.ClientRedirectUri;
+import com.street_art_explorer.auth_server.entity.ClientScope;
+import com.street_art_explorer.auth_server.entity.OAuthClient;
 
 @Component
 public class OAuthClientConverter {
@@ -39,8 +45,13 @@ public class OAuthClientConverter {
                                 redirects.add(uri.getRedirectUri())
                         )
                 )
+                .postLogoutRedirectUris(postLogoutRedirects ->
+                        oauthClient.getClientPostLogoutRedirectUris().forEach(uri ->
+                                postLogoutRedirects.add(uri.getPostLogoutRedirectUri())
+                        )
+                )
                 .tokenSettings(TokenSettings.builder()
-                        .accessTokenTimeToLive(Duration.ofMinutes(10))
+                        .accessTokenTimeToLive(Duration.ofMinutes(3))
                         .refreshTokenTimeToLive(Duration.ofDays(30))
                         .reuseRefreshTokens(false)
                         .build())
@@ -77,6 +88,12 @@ public class OAuthClientConverter {
                         .collect(Collectors.toSet())
         );
 
+        oauthClient.setClientPostLogoutRedirectUris(
+                registeredClient.getPostLogoutRedirectUris().stream()
+                        .map(uri -> new ClientPostLogoutRedirectUri(null, uri))
+                        .collect(Collectors.toSet())
+        );
+
         return oauthClient;
     }
 
@@ -97,11 +114,15 @@ public class OAuthClientConverter {
         Set<String> redirectUris = oauthClient.getRedirectUris().stream()
                 .map(ClientRedirectUri::getRedirectUri)
                 .collect(Collectors.toSet());
+        Set<String> postLogoutRedirectUris = oauthClient.getClientPostLogoutRedirectUris().stream()
+                .map(ClientPostLogoutRedirectUri::getPostLogoutRedirectUri)
+                .collect(Collectors.toSet());
 
         oauthClientDto.setAuthMethods(authMethods);
         oauthClientDto.setGrantTypes(grantTypes);
         oauthClientDto.setScopes(scopes);
         oauthClientDto.setRedirectUri(redirectUris);
+        oauthClientDto.setPostLogoutRedirectUris(postLogoutRedirectUris);
 
         return oauthClientDto;
     }

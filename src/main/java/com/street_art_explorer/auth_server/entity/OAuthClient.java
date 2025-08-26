@@ -1,12 +1,20 @@
 package com.street_art_explorer.auth_server.entity;
 
-import jakarta.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "clients")
@@ -43,6 +51,13 @@ public class OAuthClient {
             inverseJoinColumns = @JoinColumn(name = "redirect_uri_id")
     )
     private Set<ClientRedirectUri> redirectUris = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name = "client_post_logout_redirect_uris",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "post_logout_redirect_uri_id")
+    )
+    private Set<ClientPostLogoutRedirectUri> clientPostLogoutRedirectUris = new HashSet<>();
     @ManyToMany
     @JoinTable(
             name = "client_scopes",

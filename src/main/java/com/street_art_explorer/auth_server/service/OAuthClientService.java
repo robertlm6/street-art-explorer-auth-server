@@ -1,17 +1,29 @@
 package com.street_art_explorer.auth_server.service;
 
-import com.street_art_explorer.auth_server.converter.OAuthClientConverter;
-import com.street_art_explorer.auth_server.dto.OAuthClientDto;
-import com.street_art_explorer.auth_server.entity.*;
-import com.street_art_explorer.auth_server.repository.*;
-import lombok.AllArgsConstructor;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
+import com.street_art_explorer.auth_server.converter.OAuthClientConverter;
+import com.street_art_explorer.auth_server.dto.OAuthClientDto;
+import com.street_art_explorer.auth_server.entity.ClientAuthenticationMethodCustom;
+import com.street_art_explorer.auth_server.entity.ClientGrantType;
+import com.street_art_explorer.auth_server.entity.ClientPostLogoutRedirectUri;
+import com.street_art_explorer.auth_server.entity.ClientRedirectUri;
+import com.street_art_explorer.auth_server.entity.ClientScope;
+import com.street_art_explorer.auth_server.entity.OAuthClient;
+import com.street_art_explorer.auth_server.repository.ClientAuthenticationMethodCustomRepository;
+import com.street_art_explorer.auth_server.repository.ClientGrantTypeRepository;
+import com.street_art_explorer.auth_server.repository.ClientPostLogoutRedirectUriRepository;
+import com.street_art_explorer.auth_server.repository.ClientRedirectUriRepository;
+import com.street_art_explorer.auth_server.repository.ClientScopeRepository;
+import com.street_art_explorer.auth_server.repository.OAuthClientRepository;
+
+import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -22,6 +34,7 @@ public class OAuthClientService {
     private final ClientGrantTypeRepository grantTypeRepository;
     private final ClientScopeRepository scopeRepository;
     private final ClientRedirectUriRepository redirectUriRepository;
+    private final ClientPostLogoutRedirectUriRepository postLogoutRedirectUriRepository;
     private final PasswordEncoder passwordEncoder;
     private final OAuthClientConverter clientConverter;
 
@@ -49,6 +62,10 @@ public class OAuthClientService {
                 Optional.ofNullable(oauthClientDto.getRedirectUri()).orElse(Collections.emptySet())
         );
 
+        Set<ClientPostLogoutRedirectUri> postLogoutRedirectUris = postLogoutRedirectUriRepository.findByPostLogoutRedirectUriIn(
+                Optional.ofNullable(oauthClientDto.getPostLogoutRedirectUris()).orElse(Collections.emptySet())
+        );
+
         Set<ClientScope> scopes = scopeRepository.findByScopeIn(
                 Optional.ofNullable(oauthClientDto.getScopes()).orElse(Collections.emptySet())
         );
@@ -56,6 +73,7 @@ public class OAuthClientService {
         oauthClient.setAuthenticationMethods(authMethods);
         oauthClient.setGrantTypes(grantTypes);
         oauthClient.setRedirectUris(redirectUris);
+        oauthClient.setClientPostLogoutRedirectUris(postLogoutRedirectUris);
         oauthClient.setScopes(scopes);
 
         return clientConverter.oauthClientToOauthClientDTO(oauthClientRepository.save(oauthClient));
