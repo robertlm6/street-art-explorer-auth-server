@@ -1,10 +1,10 @@
 package com.street_art_explorer.auth_server.dto;
 
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Set;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,4 +17,5 @@ public class OAuthClientDto {
     private Set<String> grantTypes;
     private Set<String> scopes;
     private Set<String> redirectUri;
+    private Set<String> postLogoutRedirectUris;
 }
